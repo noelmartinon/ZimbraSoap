@@ -884,7 +884,7 @@ class ZimbraSoap(object):
         dls_xml = xmltodict.parse(self.__xml_response)
         dls = dls_xml['soap:Envelope']['soap:Body']["GetAllDistributionListsResponse"]['dl']
         for dl in dls:
-            if len(emails_prefix):
+            if len(emails_prefix) and emails_prefix != ['']:
                 for prefix in emails_prefix:
                     if isinstance(prefix, dict):
                         key = next(iter(prefix))  # Get 1st key
@@ -901,6 +901,12 @@ class ZimbraSoap(object):
                         else:
                             distribution_lists[email_out] = []
                         break
+            else:
+                email_out = dl['@name']
+                if 'dlm' in dl:
+                    distribution_lists[email_out] = dl['dlm']
+                else:
+                    distribution_lists[email_out] = []
 
         return distribution_lists
 
