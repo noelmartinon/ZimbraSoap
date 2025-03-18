@@ -955,6 +955,16 @@ class ZimbraSoap(object):
         # Set last function label
         self.__last_xml_func_called_successfully = inspect.stack()[0][3]
 
+        return xmltodict.parse(self.__xml_response)
+
+    def get_accounts_export(self, domain):
+        '''
+        Get accounts list
+        Returns a list of dictionary containing the accounts
+        '''
+        if self.__last_xml_func_called_successfully != 'get_accounts':
+            self.get_accounts(domain)
+
         # Proceed XML
         xmldict = xmltodict.parse(self.__xml_response)
         accounts = xmldict['soap:Envelope']['soap:Body']["GetAllAccountsResponse"]["account"]
