@@ -910,6 +910,57 @@ class ZimbraSoap(object):
 
         return distribution_lists
 
+    def get_accounts(self, domain):
+        '''
+        Get accounts list
+        Returns a dictionary containing the xml response
+        '''
+        # Clear the ZimbraSoap instance variables
+        self.__message = ''
+        self.__xml_response = ''
+
+        # Set XML Request
+        request_xml = '''<?xml version="1.0" ?>
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+        <soap:Header>
+            <context xmlns="urn:zimbra">
+                <authToken>%s</authToken>
+                <session/>
+                <account by="name">%s</account>
+                <userAgent name="zclient" version="10.0.0_GA_4518"/>
+            </context>
+        </soap:Header>
+        <soap:Body>
+            <GetAllAccountsRequest xmlns="urn:zimbraAdmin">
+                <domain by="name">%s</domain>
+            </GetAllAccountsRequest>
+        </soap:Body>
+        </soap:Envelope>''' % (self.__admin_token, self.__admin_username,
+                              domain)
+
+        # Post request
+        headers = { 'Content-Type': 'application/soap+xml' }
+        r = requests.post(self.__url_api, data=request_xml, headers=headers)
+        self.__xml_response = r.content
+
+        # Check xml response errors
+        namespaces = {
+            'soap': 'http://www.w3.org/2003/05/soap-envelope',
+        }
+        xml_element = etree.fromstring(r.content).find('.//soap:Body/soap:Fault/soap:Reason/soap:Text', namespaces)
+        if xml_element != None:
+            self.__message = xml_element.text
+            return None
+
+        # Set last function label
+        self.__last_xml_func_called_successfully = inspect.stack()[0][3]
+
+        # Proceed XML
+        xmldict = xmltodict.parse(self.__xml_response)
+        accounts = xmldict['soap:Envelope']['soap:Body']["GetAllAccountsResponse"]["account"]
+
+        return accounts
+
     def get_share_info(self, account):
         '''
         Get share informations
